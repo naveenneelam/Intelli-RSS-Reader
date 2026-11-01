@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+         xmlns="http://purl.org/rss/1.0/"
+         xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <channel rdf:about="https://archive.example.net/feed.rdf">
+        <title>Archive Dispatch</title>
+        <link>https://archive.example.net/</link>
+        <description>Selected documents from the public archive.</description>
+    </channel>
+    <item rdf:about="https://archive.example.net/docs/letter-1924">
+        <title>Letter from the harbour master, 1924</title>
+        <link>https://archive.example.net/docs/letter-1924</link>
+        <description>A newly digitized letter about the winter storms.</description>
+        <dc:date>2026-10-01T14:00:00Z</dc:date>
+        <dc:creator>Archives Team</dc:creator>
+    </item>
+</rdf:RDF>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/action_list_density"
+        android:title="@string/list_density"
+        android:icon="@drawable/ic_tune"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_mark_all_read"
+        android:title="@string/action_mark_all_read"
+        android:icon="@drawable/ic_done_all"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_archive_storage"
+        android:title="@string/action_view_storage"
+        android:icon="@drawable/ic_storage"
+        app:showAsAction="never" />
+</menu>

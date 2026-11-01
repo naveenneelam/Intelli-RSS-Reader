@@ -1,0 +1,13 @@
+# IntelliRSS release rules. R8 is disabled by default; these rules are ready if enabled.
+-keepattributes Signature, *Annotation*, InnerClasses, EnclosingMethod
+-keep class com.intellirs.reader.data.entity.** { *; }
+-keep class com.intellirs.reader.domain.model.** { *; }
+-keep class com.intellirs.reader.domain.filtering.** { *; }
+-keep class com.intellirs.reader.data.parser.** { *; }
+-dontwarn okhttp3.**
+-dontwarn okio.**
+-dontwarn org.jsoup.**
+-keep class com.google.gson.reflect.TypeToken { *; }
+-keep class * extends com.google.gson.TypeAdapter
+-keepclassmembers,allowobfuscation class * { @com.google.gson.annotations.SerializedName <fields>; }
+-keep public class * extends android.app.Application

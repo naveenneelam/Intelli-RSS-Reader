@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="space_xs">4dp</dimen>
+    <dimen name="space_s">8dp</dimen>
+    <dimen name="space_m">12dp</dimen>
+    <dimen name="space_l">16dp</dimen>
+    <dimen name="space_xl">24dp</dimen>
+    <dimen name="space_xxl">32dp</dimen>
+    <dimen name="row_min_height">72dp</dimen>
+    <dimen name="feed_icon_size">44dp</dimen>
+    <dimen name="article_thumb_width">108dp</dimen>
+    <dimen name="article_thumb_height">82dp</dimen>
+    <dimen name="article_rich_thumb_height">176dp</dimen>
+    <dimen name="toolbar_height">56dp</dimen>
+    <dimen name="reader_max_width">760dp</dimen>
+    <dimen name="card_radius">16dp</dimen>
+    <dimen name="touch_target">48dp</dimen>
+</resources>

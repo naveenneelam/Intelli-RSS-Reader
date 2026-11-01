@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/action_save_search"
+        android:title="@string/search_save_current"
+        android:icon="@drawable/ic_bookmark_border"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_clear_saved"
+        android:title="@string/search_clear_history"
+        android:icon="@drawable/ic_delete"
+        app:showAsAction="never" />
+</menu>

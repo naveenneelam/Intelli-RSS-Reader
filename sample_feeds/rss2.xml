@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"
+     xmlns:content="http://purl.org/rss/1.0/modules/content/"
+     xmlns:dc="http://purl.org/dc/elements/1.1/"
+     xmlns:media="http://search.yahoo.com/mrss/"
+     xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd">
+    <channel>
+        <title>River City Journal</title>
+        <link>https://journal.example.com/</link>
+        <description>Local reporting with depth.</description>
+        <language>en-gb</language>
+        <category>News</category>
+        <image>
+            <url>https://journal.example.com/logo.png</url>
+        </image>
+        <item>
+            <title><![CDATA[Reserve Bank holds the line on interest rates]]></title>
+            <link>https://journal.example.com/economy/reserve-bank-holds-rates?utm_source=rss</link>
+            <guid isPermaLink="false">river-bank-rates-001</guid>
+            <description><![CDATA[<p>The central bank kept the benchmark rate unchanged at 6.5%, citing cooling inflation.</p>]]></description>
+            <content:encoded><![CDATA[<article>
+                <h2>A cautious pause</h2>
+                <p>The central bank kept the benchmark rate unchanged at 6.5%, citing cooling inflation.</p>
+                <img src="/images/rates-chart.png" alt="Rate chart">
+                <p>Governor Meera Shah said the committee would monitor food prices before its next meeting.</p>
+            </article>]]></content:encoded>
+            <pubDate>Mon, 12 Oct 2026 08:30:00 GMT</pubDate>
+            <dc:creator>Asha Nair</dc:creator>
+            <category>Economy</category>
+            <category>Policy</category>
+            <media:thumbnail url="https://journal.example.com/images/rates-thumb.jpg" />
+        </item>
+        <item>
+            <title>Podcast: The week in local politics</title>
+            <link>https://journal.example.com/podcast/week-in-politics</link>
+            <guid>river-podcast-44</guid>
+            <description>Our reporters unpack the council budget debate.</description>
+            <pubDate>Tue, 13 Oct 2026 18:00:00 +0000</pubDate>
+            <author>newsroom@journal.example.com (River City Newsroom)</author>
+            <enclosure url="https://journal.example.com/audio/week-44.mp3"
+                       type="audio/mpeg" length="48300000" />
+            <itunes:duration>28:14</itunes:duration>
+        </item>
+        <item>
+            <title>Video: How the new bridge will change the riverfront</title>
+            <link>https://journal.example.com/video/new-bridge</link>
+            <guid>river-video-bridge</guid>
+            <description>An animated walkthrough of the proposed bridge.</description>
+            <pubDate>Wed, 14 Oct 2026 10:15:00 GMT</pubDate>
+            <media:content url="https://journal.example.com/video/bridge.mp4"
+                           type="video/mp4" medium="video" />
+        </item>
+    </channel>
+</rss>

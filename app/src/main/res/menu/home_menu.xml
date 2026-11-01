@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/action_sort_feeds"
+        android:title="@string/sort_feeds"
+        android:icon="@drawable/ic_tune"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_import_opml"
+        android:title="@string/opml_import_title"
+        android:icon="@drawable/ic_file_upload"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_manage_categories"
+        android:title="@string/action_manage_categories"
+        android:icon="@drawable/ic_category"
+        app:showAsAction="never" />
+</menu>

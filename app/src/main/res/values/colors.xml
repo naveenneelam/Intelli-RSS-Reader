@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="background">#F6F8F8</color>
+    <color name="surface">#FFFFFF</color>
+    <color name="surface_elevated">#FFFFFF</color>
+    <color name="surface_variant">#E6EEEF</color>
+    <color name="on_background">#121A1D</color>
+    <color name="on_surface">#151E22</color>
+    <color name="on_surface_variant">#52646B</color>
+    <color name="primary">#00695F</color>
+    <color name="on_primary">#FFFFFF</color>
+    <color name="primary_container">#A7F2E4</color>
+    <color name="on_primary_container">#00201C</color>
+    <color name="secondary">#4B635E</color>
+    <color name="on_secondary">#FFFFFF</color>
+    <color name="secondary_container">#CEE9E2</color>
+    <color name="on_secondary_container">#06201B</color>
+    <color name="error">#BA1A1A</color>
+    <color name="on_error">#FFFFFF</color>
+    <color name="outline">#71858C</color>
+    <color name="divider">#DDE5E7</color>
+    <color name="card_stroke">#DDE5E7</color>
+    <color name="scrim">#80000000</color>
+    <color name="transparent">#00000000</color>
+
+    <color name="importance_critical">#FF6B6B</color>
+    <color name="importance_high">#FFB84D</color>
+    <color name="importance_normal">#6FD3C7</color>
+    <color name="importance_low">#7E9BB3</color>
+    <color name="importance_muted">#5F6D73</color>
+    <color name="relevance_critical">#FF6B6B</color>
+    <color name="relevance_high">#FFB84D</color>
+    <color name="relevance_normal">#5ADCC8</color>
+    <color name="relevance_low">#8298A1</color>
+    <color name="relevance_irrelevant">#5F6D73</color>
+    <color name="health_healthy">#4CD99A</color>
+    <color name="health_degraded">#FFB84D</color>
+    <color name="health_failing">#FF6B6B</color>
+    <color name="health_inactive">#819198</color>
+
+    <color name="accent_teal">#00695F</color>
+    <color name="accent_blue">#2F5DA8</color>
+    <color name="accent_cyan">#006875</color>
+    <color name="accent_amber">#8A5A00</color>
+    <color name="accent_teal_container">#A7F2E4</color>
+    <color name="accent_blue_container">#D8E2FF</color>
+    <color name="accent_cyan_container">#A7EEFB</color>
+    <color name="accent_amber_container">#FFDF9B</color>
+    <color name="on_accent_container">#00201C</color>
+
+    <color name="reader_dark_bg">#11181B</color>
+    <color name="reader_dark_text">#DDE7EA</color>
+    <color name="reader_light_bg">#FAF9F6</color>
+    <color name="reader_light_text">#1B2225</color>
+    <color name="reader_sepia_bg">#F3E8D0</color>
+    <color name="reader_sepia_text">#3D2F1F</color>
+    <color name="reader_code_bg">#22000000</color>
+
+    <color name="bookmark">#FFCF5C</color>
+    <color name="sync_active">#5ADCC8</color>
+    <color name="sync_error">#FF6B6B</color>
+    <color name="overlay_light">#14FFFFFF</color>
+    <color name="overlay_dark">#33000000</color>
+    <color name="launcher_background">#0E1417</color>
+    <color name="letter_icon_foreground">#042E2A</color>
+    <color name="image_placeholder">#243237</color>
+</resources>

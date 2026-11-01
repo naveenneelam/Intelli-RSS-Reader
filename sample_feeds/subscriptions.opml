@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<opml version="2.0">
+    <head>
+        <title>Naveen's reading list</title>
+    </head>
+    <body>
+        <outline text="News" title="News">
+            <outline text="World" title="World">
+                <outline type="rss" text="Global Desk" title="Global Desk"
+                         xmlUrl="https://global.example.com/rss" htmlUrl="https://global.example.com/"/>
+                <outline type="rss" text="The Wire" title="The Wire"
+                         xmlUrl="https://wire.example.org/feed.xml"/>
+            </outline>
+            <outline type="rss" text="Local Paper" title="Local Paper"
+                     xmlUrl="https://local.example.net/rss.xml" htmlUrl="https://local.example.net/"
+                     category="News"/>
+        </outline>
+        <outline type="rss" text="Independent Blog" title="Independent Blog"
+                 xmlUrl="https://blog.example.com/atom.xml" htmlUrl="https://blog.example.com/"/>
+        <outline text="Broken feed entry" xmlUrl="not a url" />
+    </body>
+</opml>

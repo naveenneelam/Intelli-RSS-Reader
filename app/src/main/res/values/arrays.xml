@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="filter_field_labels">
+        <item>@string/filter_field_title</item>
+        <item>@string/filter_field_description</item>
+        <item>@string/filter_field_content</item>
+        <item>@string/filter_field_author</item>
+        <item>@string/filter_field_publisher</item>
+        <item>@string/filter_field_category</item>
+        <item>@string/filter_field_relevance</item>
+        <item>@string/filter_field_published</item>
+        <item>@string/filter_field_importance</item>
+        <item>@string/filter_field_images</item>
+        <item>@string/filter_field_video</item>
+        <item>@string/filter_field_audio</item>
+    </string-array>
+
+    <string-array name="filter_operator_labels">
+        <item>@string/filter_op_contains</item>
+        <item>@string/filter_op_not_contains</item>
+        <item>@string/filter_op_equals</item>
+        <item>@string/filter_op_not_equals</item>
+        <item>@string/filter_op_greater</item>
+        <item>@string/filter_op_less</item>
+        <item>@string/filter_op_before</item>
+        <item>@string/filter_op_after</item>
+        <item>@string/filter_op_is_true</item>
+    </string-array>
+</resources>

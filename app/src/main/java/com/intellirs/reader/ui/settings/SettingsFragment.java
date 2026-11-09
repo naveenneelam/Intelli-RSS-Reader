@@ -199,14 +199,17 @@ public class SettingsFragment extends PreferenceFragmentCompat {
                 settings.isWifiOnly(), value -> {
                     settings.setWifiOnly(value);
                     container().workScheduler().ensurePeriodicWorkAsync();
+                    container().workScheduler().refreshDailySyncAsync();
                 }));
         sync.addPreference(switchPreference(R.string.settings_sync_battery,
                 settings.isBatteryNotLowRequired(), value -> {
                     settings.setBatteryNotLowRequired(value);
                     container().workScheduler().ensurePeriodicWorkAsync();
+                    container().workScheduler().refreshDailySyncAsync();
                 }));
         Preference batteryHint = infoPreference(R.string.settings_sync_battery_hint);
         sync.addPreference(batteryHint);
+        sync.addPreference(infoPreference(R.string.settings_sync_daily_hint));
         sync.addPreference(switchPreference(R.string.settings_sync_allow_http,
                 settings.isAllowHttp(), settings::setAllowHttp,
                 R.string.settings_sync_allow_http_hint));

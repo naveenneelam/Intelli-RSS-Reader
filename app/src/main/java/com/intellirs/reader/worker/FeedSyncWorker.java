@@ -11,11 +11,12 @@ import com.intellirs.reader.IntelliRssApp;
 import com.intellirs.reader.data.sync.FeedSyncEngine;
 import com.intellirs.reader.di.AppContainer;
 
-/** WorkManager entry point for periodic and user-requested synchronization. */
+/** WorkManager entry point for periodic, daily and user-requested synchronization. */
 public class FeedSyncWorker extends Worker {
     public static final String KEY_FEED_ID = "feed_id";
     public static final String KEY_FORCE = "force";
     public static final String KEY_MANUAL = "manual";
+    public static final String KEY_DAILY = "daily";
     private static final String TAG = "FeedSyncWorker";
 
     public FeedSyncWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
@@ -29,6 +30,9 @@ public class FeedSyncWorker extends Worker {
         long feedId = getInputData().getLong(KEY_FEED_ID, -1L);
         boolean force = getInputData().getBoolean(KEY_FORCE, false);
         boolean manual = getInputData().getBoolean(KEY_MANUAL, false);
+        if (getInputData().getBoolean(KEY_DAILY, false)) {
+            Log.i(TAG, "Starting daily all-feed sync");
+        }
         try {
             FeedSyncEngine.SyncOutcome outcome = container.feedSyncEngine()
                     .sync(force, feedId, manual);

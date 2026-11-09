@@ -25,11 +25,15 @@ import java.util.concurrent.TimeUnit;
  */
 public class WorkScheduler {
     public static final String PERIODIC_SYNC_NAME = "periodic_feed_sync";
+    public static final String DAILY_SYNC_NAME = "daily_feed_sync";
     public static final String MANUAL_SYNC_NAME = "manual_feed_sync";
     public static final String STARTUP_SYNC_NAME = "startup_feed_sync";
     public static final String ARCHIVE_CLEANUP_NAME = "periodic_archive_cleanup";
     public static final String TAG_FEED_SYNC = "feed_sync";
     public static final int MIN_INTERVAL_MINUTES = 15;
+    /** No configured or per-feed interval may leave a feed unchecked for more than a day. */
+    public static final int MAX_INTERVAL_MINUTES = 24 * 60;
+    public static final long DAILY_INTERVAL_MILLIS = TimeUnit.DAYS.toMillis(1);
 
     private final Context context;
     private final SettingsRepository settings;
@@ -59,20 +63,58 @@ public class WorkScheduler {
         if (fromFeeds != null) {
             min = Math.min(min, fromFeeds);
         }
-        int interval = Math.max(MIN_INTERVAL_MINUTES, min);
-        Constraints constraints = new Constraints.Builder()
-                .setRequiredNetworkType(settings.isWifiOnly()
-                        ? NetworkType.UNMETERED : NetworkType.CONNECTED)
-                .setRequiresBatteryNotLow(settings.isBatteryNotLowRequired())
-                .build();
+        int interval = Math.min(MAX_INTERVAL_MINUTES,
+                Math.max(MIN_INTERVAL_MINUTES, min));
         PeriodicWorkRequest request = new PeriodicWorkRequest.Builder(
                 FeedSyncWorker.class, interval, TimeUnit.MINUTES)
-                .setConstraints(constraints)
+                .setConstraints(automaticSyncConstraints())
                 .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.SECONDS)
                 .addTag(TAG_FEED_SYNC)
                 .build();
         WorkManager.getInstance(context).enqueueUniquePeriodicWork(
                 PERIODIC_SYNC_NAME, ExistingPeriodicWorkPolicy.UPDATE, request);
+    }
+
+    /**
+     * Schedules a once-a-day full sync. It is independent of the configured interval and of
+     * per-feed intervals, so every active feed is fetched at least once per day whenever
+     * Android lets the worker run. Safe to call from a background thread; keeps any already
+     * scheduled daily run.
+     */
+    public void ensureDailySync() {
+        enqueueDailySync(ExistingPeriodicWorkPolicy.KEEP);
+    }
+
+    /** Applies changed Wi-Fi/battery preferences to the daily fallback worker. */
+    public void refreshDailySyncAsync() {
+        schedulerExecutor.execute(() ->
+                enqueueDailySync(ExistingPeriodicWorkPolicy.UPDATE));
+    }
+
+    private void enqueueDailySync(ExistingPeriodicWorkPolicy policy) {
+        PeriodicWorkRequest request = new PeriodicWorkRequest.Builder(
+                FeedSyncWorker.class, 24, TimeUnit.HOURS)
+                .setInitialDelay(24, TimeUnit.HOURS)
+                .setConstraints(automaticSyncConstraints())
+                .setInputData(new androidx.work.Data.Builder()
+                        .putBoolean(FeedSyncWorker.KEY_FORCE, true)
+                        .putLong(FeedSyncWorker.KEY_FEED_ID, -1L)
+                        .putBoolean(FeedSyncWorker.KEY_MANUAL, false)
+                        .putBoolean(FeedSyncWorker.KEY_DAILY, true)
+                        .build())
+                .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 1, TimeUnit.HOURS)
+                .addTag(TAG_FEED_SYNC)
+                .build();
+        WorkManager.getInstance(context).enqueueUniquePeriodicWork(
+                DAILY_SYNC_NAME, policy, request);
+    }
+
+    private Constraints automaticSyncConstraints() {
+        return new Constraints.Builder()
+                .setRequiredNetworkType(settings.isWifiOnly()
+                        ? NetworkType.UNMETERED : NetworkType.CONNECTED)
+                .setRequiresBatteryNotLow(settings.isBatteryNotLowRequired())
+                .build();
     }
 
     public void enqueueManualSync(boolean force) {
@@ -89,12 +131,7 @@ public class WorkScheduler {
      * Wi-Fi-only and battery-not-low preferences, unlike an explicit "sync now" action.
      */
     public void enqueueStartupSync() {
-        Constraints constraints = new Constraints.Builder()
-                .setRequiredNetworkType(settings.isWifiOnly()
-                        ? NetworkType.UNMETERED : NetworkType.CONNECTED)
-                .setRequiresBatteryNotLow(settings.isBatteryNotLowRequired())
-                .build();
-        enqueueAllFeedSync(constraints, true, false, STARTUP_SYNC_NAME);
+        enqueueAllFeedSync(automaticSyncConstraints(), true, false, STARTUP_SYNC_NAME);
     }
 
     private void enqueueAllFeedSync(Constraints constraints, boolean force, boolean manual,

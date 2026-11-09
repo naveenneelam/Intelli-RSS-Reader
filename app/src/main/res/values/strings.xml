@@ -279,6 +279,7 @@
 
     <!-- Feed management -->
     <string name="feed_detail_title">Feed settings</string>
+    <string name="feed_no_website">This feed has no website link.</string>
     <string name="feed_title">Title</string>
     <string name="feed_url">Feed URL</string>
     <string name="feed_website">Website URL</string>
@@ -424,6 +425,7 @@
     <string name="settings_sync_wifi">Sync on Wi-Fi only</string>
     <string name="settings_sync_battery">Wait for battery-not-low</string>
     <string name="settings_sync_battery_hint">Background work is always left to Android\u2019s scheduler. Sync times are approximate and may be deferred by Doze or device battery policies.</string>
+    <string name="settings_sync_daily_hint">All feeds are also refreshed at least once every 24 hours, subject to the same Wi-Fi and battery preferences.</string>
     <string name="settings_sync_allow_http">Allow insecure HTTP feeds</string>
     <string name="settings_sync_allow_http_hint">Off by default. When enabled, IntelliRSS may connect to feeds that do not support HTTPS. HTTP traffic is unencrypted.</string>
     <string name="settings_sync_now">Sync all feeds now</string>

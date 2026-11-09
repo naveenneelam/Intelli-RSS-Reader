@@ -20,6 +20,7 @@ public class BootReceiver extends BroadcastReceiver {
         AppContainer container = ((IntelliRssApp) context.getApplicationContext()).getContainer();
         container.ioExecutor().execute(() -> {
             container.workScheduler().ensurePeriodicWork();
+            container.workScheduler().ensureDailySync();
             container.workScheduler().ensureArchiveCleanup();
         });
     }

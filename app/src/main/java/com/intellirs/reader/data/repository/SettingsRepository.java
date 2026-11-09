@@ -40,6 +40,7 @@ public class SettingsRepository {
     public static final String KEY_ALLOW_HTTP = "allow_http";
     public static final String KEY_LAST_SYNC_STATUS = "last_sync_status";
     public static final String KEY_LAST_SYNC_TIME = "last_sync_time";
+    public static final String KEY_LAST_ALL_FEED_SYNC_TIME = "last_all_feed_sync_time";
 
     public static final String KEY_NOTIFICATIONS_ENABLED = "notifications_enabled";
     public static final String KEY_NOTIFICATION_PERMISSION_ASKED = "notification_permission_asked";
@@ -209,11 +210,11 @@ public class SettingsRepository {
     }
 
     public int getSyncIntervalMinutes() {
-        return prefs.getInt(KEY_SYNC_INTERVAL, 30);
+        return Math.max(15, Math.min(24 * 60, prefs.getInt(KEY_SYNC_INTERVAL, 30)));
     }
 
     public void setSyncIntervalMinutes(int value) {
-        putInt(KEY_SYNC_INTERVAL, Math.max(15, value));
+        putInt(KEY_SYNC_INTERVAL, Math.max(15, Math.min(24 * 60, value)));
     }
 
     public boolean isWifiOnly() {
@@ -254,6 +255,15 @@ public class SettingsRepository {
 
     public void setLastSyncTime(long value) {
         prefs.edit().putLong(KEY_LAST_SYNC_TIME, value).apply();
+    }
+
+    /** Last completed sync that covered every active feed, not a single-feed refresh. */
+    public long getLastAllFeedSyncTime() {
+        return prefs.getLong(KEY_LAST_ALL_FEED_SYNC_TIME, 0);
+    }
+
+    public void setLastAllFeedSyncTime(long value) {
+        prefs.edit().putLong(KEY_LAST_ALL_FEED_SYNC_TIME, value).apply();
     }
 
     public boolean notificationsEnabled() {

@@ -183,6 +183,8 @@ public class FeedSyncEngine {
             }
             int interval = feed.syncIntervalMinutes > 0
                     ? feed.syncIntervalMinutes : settings.getSyncIntervalMinutes();
+            // Legacy/imported values may exceed a day; never let a feed go unchecked longer.
+            interval = Math.min(WorkScheduler.MAX_INTERVAL_MINUTES, Math.max(1, interval));
             long dueAt = feed.lastSyncTime + interval * 60_000L;
             if (now >= dueAt) {
                 due.add(feed);
@@ -194,7 +196,11 @@ public class FeedSyncEngine {
         if (due.isEmpty()) {
             finishRun(runId, run, startedAt, 0, 0, 0, 0, null, false);
             syncStatusBus.complete(0, 0, 0);
-            settings.setLastSyncTime(System.currentTimeMillis());
+            long checkedAt = System.currentTimeMillis();
+            settings.setLastSyncTime(checkedAt);
+            if (onlyFeedId <= 0) {
+                settings.setLastAllFeedSyncTime(checkedAt);
+            }
             settings.setLastSyncStatus("No feeds were due");
             outcome.feedsSucceeded = 0;
             outcome.feedsFailed = 0;
@@ -287,6 +293,9 @@ public class FeedSyncEngine {
                 newArticles.get(), errorSummary, manual);
         long finishedAt = System.currentTimeMillis();
         settings.setLastSyncTime(finishedAt);
+        if (onlyFeedId <= 0) {
+            settings.setLastAllFeedSyncTime(finishedAt);
+        }
         if (failed.get() == 0) {
             syncStatusBus.complete(succeeded.get(), 0, newArticles.get());
             settings.setLastSyncStatus("Synced " + succeeded.get() + " feeds, "

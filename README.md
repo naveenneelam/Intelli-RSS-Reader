@@ -1,4 +1,4 @@
-﻿# IntelliRSS
+# IntelliRSS
 
 **IntelliRSS** is a privacy-focused, offline-first RSS/Atom/RDF reader for Android, written
 entirely in Java with native Android Views and Material Design 3.
@@ -130,10 +130,13 @@ com.intellirs.reader
   and reboot persistence.
 
 ### Background scheduling
-- Periodic unique work, minimum 15 minutes, default 30 minutes.
-- Opening the main app requests an immediate all-feed sync. It respects the Wi-Fi-only and
-  battery-not-low preferences, and a determinate progress bar shows completed feeds whenever
-  synchronization is running.
+- Periodic unique work, minimum 15 minutes, default 30 minutes, capped at 24 hours.
+- A separate daily fallback forces every active feed to sync at least once every 24 hours,
+  even if the configured or per-feed interval is longer.
+- Opening the main app requests an immediate all-feed sync. If the last full sync is more
+  than 24 hours old, resuming the app also queues a daily catch-up sync. Both respect the
+  Wi-Fi-only and battery-not-low preferences, and a determinate progress bar shows completed
+  feeds whenever synchronization is running.
 - The periodic cadence is the shortest effective global/per-feed interval (floor 15 minutes).
 - Every feed also has its own interval check when work runs.
 - Conditional GET uses ETag / Last-Modified.
@@ -340,7 +343,9 @@ These are deliberate scope/technical limits, not hidden dummy controls:
     and the SDK emulator/system images are not installed). They compile successfully and are
     included for execution in Android Studio or on a physical device.
 11. **Exact sync time is not guaranteed**. WorkManager, Doze, battery optimization and OEM
-    policies can defer periodic work.
+    policies can defer periodic work. The app requests a full all-feed sync at least once every
+    24 hours and falls back to a catch-up sync when the app is opened, but Android controls when
+    background work actually runs.
 12. **HTML archive export** keeps image URLs pointing at the original publisher when the archived
     copy is not used; use the ZIP or full backup to retain local images.
 

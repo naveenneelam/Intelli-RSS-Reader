@@ -48,6 +48,7 @@ import com.intellirs.reader.ui.search.SearchActivity;
 import com.intellirs.reader.ui.settings.SettingsActivity;
 import com.intellirs.reader.ui.statistics.StatisticsActivity;
 import com.intellirs.reader.util.DateUtils;
+import com.intellirs.reader.worker.WorkScheduler;
 
 import java.util.List;
 
@@ -131,6 +132,7 @@ public class MainActivity extends BaseActivity {
         super.onResume();
         invalidateOptionsMenu();
         updateSyncDrawableTint();
+        maybeRunDailyCatchUpSync();
     }
 
     @Override
@@ -448,6 +450,35 @@ public class MainActivity extends BaseActivity {
                 }
             } catch (RuntimeException e) {
                 Log.w("MainActivity", "Could not start startup sync", e);
+            }
+        });
+    }
+
+    /**
+     * Foreground fallback for the daily guarantee. If the app stays open for more than a day
+     * and WorkManager has not run the daily worker, refresh every feed when the screen returns.
+     */
+    private void maybeRunDailyCatchUpSync() {
+        container.ioExecutor().execute(() -> {
+            try {
+                SyncStatus current = container.syncStatusBus().get();
+                if (current != null && current.state == SyncStatus.State.RUNNING) {
+                    return;
+                }
+                long lastAllFeedSync = settings.getLastAllFeedSyncTime();
+                if (lastAllFeedSync <= 0) {
+                    // Upgrade path: older installs only have the generic last-sync timestamp.
+                    lastAllFeedSync = settings.getLastSyncTime();
+                }
+                if (lastAllFeedSync > 0 && System.currentTimeMillis() - lastAllFeedSync
+                        < WorkScheduler.DAILY_INTERVAL_MILLIS) {
+                    return;
+                }
+                if (container.database().feedDao().countActive() > 0) {
+                    container.workScheduler().enqueueStartupSync();
+                }
+            } catch (RuntimeException e) {
+                Log.w("MainActivity", "Could not start daily catch-up sync", e);
             }
         });
     }

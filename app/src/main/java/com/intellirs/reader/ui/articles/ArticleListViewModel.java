@@ -1,8 +1,11 @@
 package com.intellirs.reader.ui.articles;
 
 import android.app.Application;
+import android.os.Handler;
+import android.os.Looper;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
@@ -29,6 +32,7 @@ public class ArticleListViewModel extends AndroidViewModel {
     private volatile boolean endReached;
     private volatile boolean initialized;
     private volatile boolean reloadRequested;
+    private volatile int autoMarkedUpTo = -1;
 
     public ArticleListViewModel(@NonNull Application application) {
         super(application);
@@ -58,6 +62,7 @@ public class ArticleListViewModel extends AndroidViewModel {
         generation++;
         initialized = false;
         endReached = false;
+        autoMarkedUpTo = -1;
         synchronized (loaded) {
             loaded.clear();
         }
@@ -89,6 +94,7 @@ public class ArticleListViewModel extends AndroidViewModel {
         final int requestGeneration = generation;
         final ArticleFilter requestFilter = filter;
         endReached = false;
+        autoMarkedUpTo = -1;
         ArticleListState old = state.getValue();
         state.postValue(new ArticleListState(old == null ? new ArrayList<>() : old.articles,
                 true, false, false, null));
@@ -224,10 +230,57 @@ public class ArticleListViewModel extends AndroidViewModel {
     }
 
     public void markAllRead() {
+        markAllRead(null);
+    }
+
+    /**
+     * Marks every article in the current view read and signals completion on the main thread,
+     * so callers can navigate away only after the database update has been applied.
+     */
+    public void markAllRead(@Nullable Runnable onComplete) {
+        final ArticleFilter requestFilter = filter;
         container.ioExecutor().execute(() -> {
-            container.articleRepository().markAllRead(filter);
+            container.articleRepository().markAllRead(requestFilter);
             loadInitial();
+            if (onComplete != null) {
+                new Handler(Looper.getMainLooper()).post(onComplete);
+            }
         });
+    }
+
+    /**
+     * Marks the rows that have scrolled off the top of a feed list as read. The UI list is
+     * updated in one pass, then the database write happens in the background.
+     */
+    public void markReadAbove(int firstVisiblePosition) {
+        ArticleListState current = state.getValue();
+        if (current == null || current.articles.isEmpty()
+                || firstVisiblePosition <= 0
+                || firstVisiblePosition <= autoMarkedUpTo) {
+            return;
+        }
+        autoMarkedUpTo = firstVisiblePosition;
+        int limit = Math.min(firstVisiblePosition, current.articles.size());
+        List<Long> readIds = new ArrayList<>();
+        List<ArticleEntity> updated = new ArrayList<>(current.articles.size());
+        for (int i = 0; i < current.articles.size(); i++) {
+            ArticleEntity article = current.articles.get(i);
+            if (i < limit && !article.isRead) {
+                ArticleEntity copy = copy(article);
+                copy.isRead = true;
+                updated.add(copy);
+                readIds.add(copy.id);
+            } else {
+                updated.add(article);
+            }
+        }
+        if (readIds.isEmpty()) {
+            return;
+        }
+        state.setValue(new ArticleListState(updated, current.loading, current.loadingMore,
+                current.endReached, current.error));
+        container.ioExecutor().execute(() ->
+                container.articleRepository().markReadByIds(readIds));
     }
 
     private ArticleEntity copy(ArticleEntity source) {

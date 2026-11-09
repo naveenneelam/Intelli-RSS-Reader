@@ -230,6 +230,7 @@ public class ReaderActivity extends BaseActivity {
     }
 
     private void setupButtons() {
+        titleView.setOnClickListener(view -> openOriginalArticle());
         findViewById(R.id.note_edit).setOnClickListener(view -> showNoteDialog());
         noteText.setOnClickListener(view -> showNoteDialog());
         audioPlay.setOnClickListener(view -> toggleAudio());
@@ -1083,7 +1084,13 @@ public class ReaderActivity extends BaseActivity {
         if (currentState == null) {
             return;
         }
+        // The title is tappable and the overflow action both open the article's page.
+        // Prefer the original URL, then fall back to the canonical URL when a feed
+        // omitted the original link.
         String url = currentState.article.originalUrl;
+        if (!UrlUtils.isValidHttpUrl(url)) {
+            url = currentState.article.canonicalUrl;
+        }
         if (url == null || !UrlUtils.isValidHttpUrl(url)) {
             Snackbar.make(findViewById(R.id.reader_root), R.string.reader_no_original_url,
                     Snackbar.LENGTH_LONG).show();

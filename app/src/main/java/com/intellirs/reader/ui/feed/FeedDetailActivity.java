@@ -1,5 +1,8 @@
 package com.intellirs.reader.ui.feed;
 
+import android.content.ActivityNotFoundException;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ArrayAdapter;
@@ -29,6 +32,7 @@ import com.intellirs.reader.ui.BaseActivity;
 import com.intellirs.reader.ui.common.IconLoader;
 import com.intellirs.reader.util.DateUtils;
 import com.intellirs.reader.util.TextUtils;
+import com.intellirs.reader.util.UrlUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -102,6 +106,27 @@ public class FeedDetailActivity extends BaseActivity {
         findViewById(R.id.move_up).setOnClickListener(view -> move(true));
         findViewById(R.id.move_down).setOnClickListener(view -> move(false));
         applySuggestion.setOnClickListener(view -> applySuggestion());
+        feedHeaderTitle.setOnClickListener(view -> openFeedWebsite());
+    }
+
+    /** The header title doubles as a shortcut to the publisher's website. */
+    private void openFeedWebsite() {
+        if (loadedFeed == null) {
+            return;
+        }
+        String url = loadedFeed.websiteUrl;
+        if (url == null || !UrlUtils.isValidHttpUrl(url)) {
+            url = loadedFeed.feedUrl;
+        }
+        if (url == null || !UrlUtils.isValidHttpUrl(url)) {
+            Toast.makeText(this, R.string.feed_no_website, Toast.LENGTH_LONG).show();
+            return;
+        }
+        try {
+            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+        } catch (ActivityNotFoundException e) {
+            Toast.makeText(this, R.string.could_not_open_link, Toast.LENGTH_LONG).show();
+        }
     }
 
     private void populate(FeedDetailData data) {

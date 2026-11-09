@@ -1,5 +1,6 @@
 package com.intellirs.reader.ui.articles;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -9,6 +10,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ProgressBar;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -41,6 +43,7 @@ public class ArticleListFragment extends Fragment implements ArticleAdapter.List
     private LinearLayoutManager layoutManager;
     private String title = "";
     private ArticleFilter filter = ArticleFilter.all();
+    private boolean autoMarkReadOnScroll;
 
     public static ArticleListFragment newInstance(ArticleFilter filter, String title) {
         ArticleListFragment fragment = new ArticleListFragment();
@@ -62,6 +65,9 @@ public class ArticleListFragment extends Fragment implements ArticleAdapter.List
             }
             title = getArguments().getString(ARG_TITLE, "");
         }
+        // Feed lists mark the rows a reader has already scrolled past, matching the
+        // "read what you have seen" behaviour of a dedicated feed inbox.
+        autoMarkReadOnScroll = filter.mode == ArticleFilter.Mode.FEED;
     }
 
     @Nullable
@@ -100,6 +106,12 @@ public class ArticleListFragment extends Fragment implements ArticleAdapter.List
                 int last = layoutManager.findLastVisibleItemPosition();
                 if (last >= total - 6) {
                     viewModel.loadMore();
+                }
+                if (autoMarkReadOnScroll) {
+                    int first = layoutManager.findFirstVisibleItemPosition();
+                    if (first > 0) {
+                        viewModel.markReadAbove(first);
+                    }
                 }
             }
         });
@@ -224,12 +236,20 @@ public class ArticleListFragment extends Fragment implements ArticleAdapter.List
         new MaterialAlertDialogBuilder(requireContext())
                 .setTitle(R.string.action_mark_all_read)
                 .setMessage(R.string.articles_mark_all_read_confirm)
-                .setPositiveButton(R.string.action_mark_all_read, (dialog, which) -> {
-                    viewModel.markAllRead();
-                    Snackbar.make(requireView(), R.string.articles_marked_read,
-                            Snackbar.LENGTH_SHORT).show();
-                })
+                .setPositiveButton(R.string.action_mark_all_read, (dialog, which) ->
+                        viewModel.markAllRead(this::returnHomeAfterMarkAllRead))
                 .setNegativeButton(R.string.action_cancel, null)
                 .show();
+    }
+
+    private void returnHomeAfterMarkAllRead() {
+        if (!isAdded()) {
+            return;
+        }
+        Context context = requireContext().getApplicationContext();
+        if (getActivity() instanceof MainActivity) {
+            ((MainActivity) getActivity()).showHome();
+        }
+        Toast.makeText(context, R.string.articles_marked_read, Toast.LENGTH_SHORT).show();
     }
 }

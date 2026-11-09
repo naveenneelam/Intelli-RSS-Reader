@@ -88,6 +88,21 @@ public class ArticleRepository {
         articleDao.setRead(articleId, read);
     }
 
+    /** Bulk read marker used when a feed list is scrolled and rows leave the top. */
+    public int markReadByIds(List<Long> articleIds) {
+        if (articleIds == null || articleIds.isEmpty()) {
+            return 0;
+        }
+        int updated = 0;
+        // SQLite implementations on older Android versions cap host parameters at 999,
+        // so keep every IN(...) list well below that.
+        for (int start = 0; start < articleIds.size(); start += 500) {
+            int end = Math.min(articleIds.size(), start + 500);
+            updated += articleDao.markReadByIds(articleIds.subList(start, end));
+        }
+        return updated;
+    }
+
     public void toggleBookmark(long articleId) {
         ArticleEntity article = articleDao.getById(articleId);
         if (article != null) {

@@ -18,6 +18,7 @@ public class IntelliRssApp extends Application {
         NotificationChannelManager.createChannels(this);
         container.ioExecutor().execute(() -> {
             container.workScheduler().ensurePeriodicWork();
+            container.workScheduler().ensureDailySync();
             container.workScheduler().ensureArchiveCleanup();
         });
     }

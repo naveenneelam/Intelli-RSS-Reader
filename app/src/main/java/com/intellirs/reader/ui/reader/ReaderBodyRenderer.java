@@ -1,20 +1,28 @@
 package com.intellirs.reader.ui.reader;
 
+import android.app.Activity;
+import android.content.ActivityNotFoundException;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Typeface;
+import android.net.Uri;
 import android.text.Html;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
+import android.text.TextPaint;
 import android.text.method.LinkMovementMethod;
+import android.text.style.ClickableSpan;
+import android.text.style.URLSpan;
 import android.util.TypedValue;
-import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
-import androidx.core.content.ContextCompat;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.bumptech.glide.Glide;
 import com.google.android.material.imageview.ShapeableImageView;
@@ -32,7 +40,10 @@ import org.jsoup.select.Elements;
 
 import java.io.File;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Renders sanitized article HTML into a native LinearLayout. The app never uses a WebView,
@@ -40,6 +51,9 @@ import java.util.Set;
  * theme changes.
  */
 public class ReaderBodyRenderer {
+    private static final Pattern BARE_URL = Pattern.compile(
+            "(?i)\\b(?:https?://|www\\.)[^\\s<>\"'\\u00A0\\u200B]+");
+
     private final Context context;
     private final ReaderStyle style;
     private final ArchiveManager archiveManager;
@@ -128,6 +142,10 @@ public class ReaderBodyRenderer {
                     if (!element.text().trim().isEmpty()) {
                         addText(element.html(), style.fontSp, false, false);
                     }
+                } else if (hasDirectText(element)) {
+                    // Mixed text and inline markup (common in feed footers) must be
+                    // rendered together or the surrounding text is silently dropped.
+                    renderTextAndImages(element, style.fontSp, false);
                 } else {
                     for (Element child : element.children()) {
                         renderElement(child);
@@ -144,7 +162,7 @@ public class ReaderBodyRenderer {
 
     private void addHeading(Element element, int sizeSp) {
         TextView view = newTextView(sizeSp, true, false);
-        view.setText(Html.fromHtml(element.html(), Html.FROM_HTML_MODE_COMPACT));
+        setLinkedText(view, linkifyHtml(element.html()));
         LinearLayout.LayoutParams params = params();
         params.topMargin = dp(18);
         params.bottomMargin = dp(6);
@@ -162,7 +180,10 @@ public class ReaderBodyRenderer {
             }
             image.remove();
         }
-        String html = clone.html().trim();
+        String tag = element.tagName().toLowerCase(Locale.ROOT);
+        // For an inline element such as <a> or <strong>, keep its own markup so a link
+        // that sits directly inside a container is not flattened to plain text.
+        String html = (isInlineTag(tag) ? clone.outerHtml() : clone.html()).trim();
         if (!html.isEmpty() && !clone.text().trim().isEmpty()) {
             addText(html, sizeSp, false, italic);
         }
@@ -171,9 +192,41 @@ public class ReaderBodyRenderer {
         }
     }
 
+    private boolean isInlineTag(String tag) {
+        switch (tag) {
+            case "a":
+            case "span":
+            case "strong":
+            case "b":
+            case "em":
+            case "i":
+            case "u":
+            case "s":
+            case "small":
+            case "code":
+            case "sup":
+            case "sub":
+            case "abbr":
+            case "font":
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    private boolean hasDirectText(Element element) {
+        for (org.jsoup.nodes.Node node : element.childNodes()) {
+            if (node instanceof org.jsoup.nodes.TextNode
+                    && !((org.jsoup.nodes.TextNode) node).text().trim().isEmpty()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private void addBlockquote(Element element) {
         TextView view = newTextView(style.fontSp, false, true);
-        view.setText(Html.fromHtml(element.html(), Html.FROM_HTML_MODE_COMPACT));
+        setLinkedText(view, linkifyHtml(element.html()));
         view.setTextColor(style.secondaryText);
         view.setPadding(dp(14), dp(10), dp(10), dp(10));
         android.graphics.drawable.GradientDrawable background =
@@ -216,10 +269,9 @@ public class ReaderBodyRenderer {
             }
             SpannableStringBuilder builder = new SpannableStringBuilder();
             builder.append(ordered ? index + ". " : "\u2022 ");
-            builder.append(Html.fromHtml(item.html(), Html.FROM_HTML_MODE_COMPACT));
+            builder.append(linkifyHtml(item.html()));
             TextView view = newTextView(style.fontSp, false, false);
-            view.setText(builder);
-            view.setLinkTextColor(style.accent);
+            setLinkedText(view, builder);
             LinearLayout.LayoutParams params = params();
             params.setMarginStart(dp(8));
             params.bottomMargin = dp(4);
@@ -236,7 +288,7 @@ public class ReaderBodyRenderer {
         Element caption = figure.selectFirst("figcaption");
         if (caption != null && !caption.text().trim().isEmpty()) {
             TextView view = newTextView(style.fontSp - 3, false, true);
-            view.setText(caption.text());
+            setLinkedText(view, linkifyHtml(caption.html()));
             view.setTextColor(style.secondaryText);
             LinearLayout.LayoutParams params = params();
             params.bottomMargin = dp(12);
@@ -259,7 +311,7 @@ public class ReaderBodyRenderer {
                 builder.append(line).append('\n');
             }
         }
-        view.setText(builder.toString().trim());
+        setLinkedText(view, linkifyPlainText(builder.toString().trim()));
         view.setPadding(dp(12), dp(8), dp(12), dp(8));
         android.graphics.drawable.GradientDrawable background =
                 new android.graphics.drawable.GradientDrawable();
@@ -273,17 +325,196 @@ public class ReaderBodyRenderer {
     }
 
     private void addText(String html, int sizeSp, boolean bold, boolean italic) {
-        TextView view = newTextView(sizeSp, bold, italic);
-        Spanned text = Html.fromHtml(html, Html.FROM_HTML_MODE_COMPACT);
+        CharSequence text = linkifyHtml(html);
         if (text.toString().trim().isEmpty()) {
             return;
         }
-        view.setText(text);
-        view.setMovementMethod(LinkMovementMethod.getInstance());
-        view.setLinkTextColor(style.accent);
+        TextView view = newTextView(sizeSp, bold, italic);
+        setLinkedText(view, text);
         LinearLayout.LayoutParams params = params();
         params.bottomMargin = dp(10);
         addView(view, params);
+    }
+
+    /**
+     * Converts an HTML fragment into a span that keeps real anchors clickable and also
+     * turns plain-text URLs into links. Feed footers such as "Comments" or "Read more" are
+     * frequently plain text, so relying on anchor tags alone is not enough.
+     */
+    private CharSequence linkifyHtml(String html) {
+        if (html == null || html.isEmpty()) {
+            return "";
+        }
+        Spanned parsed = Html.fromHtml(html, Html.FROM_HTML_MODE_COMPACT);
+        SpannableStringBuilder builder = new SpannableStringBuilder(parsed);
+        replaceAnchorSpans(builder);
+        linkifyBareUrls(builder);
+        return builder;
+    }
+
+    private CharSequence linkifyPlainText(String text) {
+        SpannableStringBuilder builder = new SpannableStringBuilder(text == null ? "" : text);
+        linkifyBareUrls(builder);
+        return builder;
+    }
+
+    private void replaceAnchorSpans(SpannableStringBuilder builder) {
+        URLSpan[] anchors = builder.getSpans(0, builder.length(), URLSpan.class);
+        for (URLSpan anchor : anchors) {
+            int start = builder.getSpanStart(anchor);
+            int end = builder.getSpanEnd(anchor);
+            if (start < 0 || end <= start) {
+                continue;
+            }
+            String href = anchor.getURL();
+            builder.removeSpan(anchor);
+            String resolved = resolveLink(href);
+            if (resolved != null) {
+                builder.setSpan(new ExternalLinkSpan(resolved), start, end,
+                        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            } else if (isNonWebLink(href)) {
+                // mailto: and tel: links are still useful and Android can route them.
+                builder.setSpan(new URLSpan(href), start, end,
+                        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }
+        }
+    }
+
+    @Nullable
+    private String resolveLink(String href) {
+        if (href == null) {
+            return null;
+        }
+        String value = href.trim();
+        if (value.isEmpty()) {
+            return null;
+        }
+        if (value.startsWith("//")) {
+            value = "https:" + value;
+        }
+        if (UrlUtils.isValidHttpUrl(value)) {
+            return value;
+        }
+        if (baseUrl != null && !baseUrl.isEmpty()) {
+            String resolved = UrlUtils.resolve(baseUrl, value);
+            if (UrlUtils.isValidHttpUrl(resolved)) {
+                return resolved;
+            }
+        }
+        return null;
+    }
+
+    private boolean isNonWebLink(String href) {
+        if (href == null) {
+            return false;
+        }
+        String value = href.trim().toLowerCase(Locale.ROOT);
+        return value.startsWith("mailto:") || value.startsWith("tel:");
+    }
+
+    private void linkifyBareUrls(SpannableStringBuilder builder) {
+        Matcher matcher = BARE_URL.matcher(builder);
+        while (matcher.find()) {
+            int start = matcher.start();
+            int end = trimTrailingPunctuation(builder, start, matcher.end());
+            if (end <= start || hasClickableSpan(builder, start, end)) {
+                continue;
+            }
+            String visible = builder.subSequence(start, end).toString();
+            String url = visible.regionMatches(true, 0, "www.", 0, 4)
+                    ? "https://" + visible : visible;
+            if (UrlUtils.isValidHttpUrl(url)) {
+                builder.setSpan(new ExternalLinkSpan(url), start, end,
+                        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }
+        }
+    }
+
+    private boolean hasClickableSpan(SpannableStringBuilder builder, int start, int end) {
+        ClickableSpan[] spans = builder.getSpans(start, end, ClickableSpan.class);
+        return spans != null && spans.length > 0;
+    }
+
+    private int trimTrailingPunctuation(CharSequence text, int start, int end) {
+        int last = end;
+        while (last > start) {
+            char c = text.charAt(last - 1);
+            boolean punctuation = c == '.' || c == ',' || c == ';' || c == ':'
+                    || c == '!' || c == '?' || c == '\'' || c == '\"'
+                    || c == '\u2019' || c == '\u201d' || c == '\u00bb'
+                    || c == ']' || c == '}';
+            if (c == ')') {
+                // Keep a closing parenthesis that balances one inside the URL.
+                punctuation = count(text, start, last - 1, '(')
+                        <= count(text, start, last - 1, ')');
+            }
+            if (!punctuation) {
+                break;
+            }
+            last--;
+        }
+        return last;
+    }
+
+    private int count(CharSequence text, int start, int end, char target) {
+        int total = 0;
+        for (int i = start; i < end; i++) {
+            if (text.charAt(i) == target) {
+                total++;
+            }
+        }
+        return total;
+    }
+
+    private void setLinkedText(TextView view, CharSequence text) {
+        boolean hasLinks = text instanceof Spanned
+                && ((Spanned) text).getSpans(0, text.length(), ClickableSpan.class).length > 0;
+        view.setText(text);
+        if (hasLinks) {
+            // A selectable TextView installs an editor that swallows the touch events
+            // LinkMovementMethod needs, so selection is disabled only when links exist.
+            view.setTextIsSelectable(false);
+            view.setMovementMethod(LinkMovementMethod.getInstance());
+        } else {
+            view.setTextIsSelectable(true);
+        }
+        view.setLinkTextColor(style.accent);
+    }
+
+    private void openExternal(String url) {
+        if (!UrlUtils.isValidHttpUrl(url)) {
+            Toast.makeText(context, R.string.invalid_link, Toast.LENGTH_LONG).show();
+            return;
+        }
+        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+        if (!(context instanceof Activity)) {
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        }
+        try {
+            context.startActivity(intent);
+        } catch (ActivityNotFoundException e) {
+            Toast.makeText(context, R.string.could_not_open_link, Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private final class ExternalLinkSpan extends ClickableSpan {
+        private final String url;
+
+        ExternalLinkSpan(String url) {
+            this.url = url;
+        }
+
+        @Override
+        public void onClick(@NonNull View widget) {
+            openExternal(url);
+        }
+
+        @Override
+        public void updateDrawState(@NonNull TextPaint ds) {
+            super.updateDrawState(ds);
+            ds.setColor(style.accent);
+            ds.setUnderlineText(true);
+        }
     }
 
     private TextView newTextView(int sizeSp, boolean bold, boolean italic) {
@@ -295,7 +526,6 @@ public class ReaderBodyRenderer {
         view.setTypeface(style.typeface, typefaceStyle);
         view.setLineSpacing(0, style.lineSpacing);
         view.setIncludeFontPadding(false);
-        view.setTextIsSelectable(true);
         return view;
     }
 

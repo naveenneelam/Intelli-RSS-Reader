@@ -56,6 +56,16 @@ public class WorkSchedulerTest {
     }
 
     @Test
+    public void dailySyncIsScheduledSeparately() throws Exception {
+        scheduler.ensureDailySync();
+        scheduler.ensureDailySync();
+        List<WorkInfo> infos = workManager
+                .getWorkInfosForUniqueWork(WorkScheduler.DAILY_SYNC_NAME)
+                .get(10, TimeUnit.SECONDS);
+        assertFalse(infos.isEmpty());
+    }
+
+    @Test
     public void manualSyncAcceptsInput() throws Exception {
         scheduler.enqueueManualSync(true);
         List<WorkInfo> infos = workManager
